@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Realm of SsA</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #000 0%, #434343 100%);
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 8em;
+            color: #000;
+            margin: 0;
+            opacity: 0;
+            animation: fadeIn 3s forwards, glow 1.5s infinite alternate;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #00ff00;
+            }
+            to {
+                text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00, 0 0 40px #00ff00, 0 0 50px #00ff00, 0 0 60px #00ff00;
+            }
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2em;
+            color: #00ff00;
+            animation: fadeIn 5s forwards;
+            z-index: 2;
+        }
+
+        .matrix-canvas, .particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .particle-canvas {
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas" class="matrix-canvas"></canvas>
+    <canvas id="particle-canvas" class="particle-canvas"></canvas>
+    <div class="container">
+        <h1>The Realm Of SsA</h1>
+    </div>
+    <div class="footer"></div>
+
+    <script>
+        // Matrix Rain Animation
+        const matrixCanvas = document.getElementById('matrix-canvas');
+        const matrixCtx = matrixCanvas.getContext('2d');
+
+        function resizeMatrixCanvas() {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeMatrixCanvas);
+        resizeMatrixCanvas();
+
+        const matrixColumns = Math.floor(matrixCanvas.width / 20);
+        const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%";
+        const matrixDrops = Array(matrixColumns).fill(1);
+
+        function drawMatrix() {
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+
+            matrixCtx.fillStyle = '#0F0';
+            matrixCtx.font = '15px monospace';
+
+            matrixDrops.forEach((drop, i) => {
+                const text = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+                matrixCtx.fillText(text, i * 20, drop * 20);
+
+                if (drop * 20 > matrixCanvas.height && Math.random() > 0.975) {
+                    matrixDrops[i] = 0;
+                }
+                matrixDrops[i]++;
+            });
+        }
+
+        function animateMatrix() {
+            requestAnimationFrame(animateMatrix);
+            drawMatrix();
+        }
+
+        animateMatrix();
+
+        // Particle Animation
+        const particleCanvas = document.getElementById('particle-canvas');
+        const particleCtx = particleCanvas.getContext('2d');
+
+        function resizeParticleCanvas() {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeParticleCanvas);
+        resizeParticleCanvas();
+
+        class Particle {
+            constructor(x, y, radius, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.color = color;
+                this.radians = Math.random() * Math.PI * 2;
+                this.velocity = 0.05;
+                this.distanceFromCenter = {
+                    x: Math.random() * 100 + 50,
+                    y: Math.random() * 100 + 50
+                };
+                this.lastMouse = { x: x, y: y };
+            }
+
+            draw(lastPoint) {
+                particleCtx.beginPath();
+                particleCtx.strokeStyle = this.color;
+                particleCtx.lineWidth = this.radius;
+                particleCtx.moveTo(lastPoint.x, lastPoint.y);
+                particleCtx.lineTo(this.x, this.y);
+                particleCtx.stroke();
+                particleCtx.closePath();
+            }
+
+            update() {
+                const lastPoint = { x: this.x, y: this.y };
+                this.radians += this.velocity;
+
+                this.lastMouse.x += (mouse.x - this.lastMouse.x) * 0.05;
+                this.lastMouse.y += (mouse.y - this.lastMouse.y) * 0.05;
+
+                this.x = this.lastMouse.x + Math.cos(this.radians) * this.distanceFromCenter.x;
+                this.y = this.lastMouse.y + Math.sin(this.radians) * this.distanceFromCenter.y;
+                this.draw(lastPoint);
+            }
+        }
+
+        let particles;
+        const mouse = {
+            x: innerWidth / 2,
+            y: innerHeight / 2
+        };
+
+        function initParticles() {
+            particles = [];
+            const colors = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 255, 255, 0.5)', 'rgba(255, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)'];
+            for (let i = 0; i < 100; i++) {
+                const radius = Math.random() * 2 + 1;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new Particle(particleCanvas.width / 2, particleCanvas.height / 2, radius, color));
+            }
+        }
+
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+            particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+            particles.forEach(particle => {
+                particle.update();
+            });
+        }
+
+        initParticles();
+        animateParticles();
+
+        addEventListener('mousemove', (event) => {
+            mouse.x = event.clientX;
+            mouse.y = event.clientY;
+        });
+
+        addEventListener('mouseout', () => {
+            mouse.x = innerWidth / 2;
+            mouse.y = innerHeight / 2;
+        });
+    </script>
+</body>
+</html>
